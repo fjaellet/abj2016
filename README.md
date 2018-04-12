@@ -31,5 +31,5 @@ You can also get the posterior PDF itself, via e.g.:
 pi, sigma_pi = 0.3, 0.1 # measured parallax and uncertainty in mas 
 distarray, distpdf = abj2016.distpdf(pi, sigma_pi, min_dist=0., max_dist=10., resolution=100000, priors="uniform_distance")
 ~~~~
-Simple, right? Have fun and give a shout if you find a bug.
+Have fun and give a shout if you find a bug or have a question: `fanders*ät*aip*dot*de`.
 
