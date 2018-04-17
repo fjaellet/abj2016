@@ -1,6 +1,6 @@
 # Getting distances from parallaxes using the simple Bayes formula by Astraatmadja & Bailer-Jones (2016)
 # Author: F. Anders (AIP)
-# Last modified: 12.04.2018
+# Last modified: 17.04.2018
 
 import numpy as np
 
