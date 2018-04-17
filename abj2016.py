@@ -31,14 +31,14 @@ def uniform_density_prior(d, rlim=30.):
     """
     return np.piecewise(d, [d < 0, (d >= 0)*(d<=rlim), d>rlim], [0, 1/(rlim**3.) * d**2., 0])
 
-def exp_prior(d, L=1.):
+def exp_prior(d, L=1.35):
     """
     Exponentially decreasing space density prior
     
     Input:
         d: distance (typically an array)
     Optional:
-        L: Scale of the exponentially decreasing density (default: 1 kpc)
+        L: Scale of the exponentially decreasing density (default: 1.35 kpc)
     Output:
         Exponentially decreasing space density prior
     """
@@ -88,77 +88,43 @@ def posterior(distarray, pi, sigma_pi, prior="exponential" ):
     else:
         return prior(distarray)[:, np.newaxis] * likelihood(pi, distarray, sigma_pi)
 
-
-def distpdf(pi, sigma_pi, min_dist=0., max_dist=30., resolution=10000, **kwargs):
+class distpdf(object):
     """
-    Returns a distance array and the corresponding distance PDF
+    Class for posterior distance PDF given parallax and parallax uncertainty
+    """
+    def __init__(self, pi, sigma_pi, min_dist=0., max_dist=30., resolution=10000, **kwargs):
+        """
+        Returns a distance array and the corresponding distance PDF
+            
+        Input:
+            pi:        parallax (array or scalar)
+            sigma_pi:  parallax_uncertainty (array or scalar)
+        Optional:
+            min_dist:  minimum allowed distance
+            max_dist:  maximum allowed distance
+            resolution:resolution of the distance PDF
+        Output:
+            (none)
+        Object properties:
+            distarray, distpdf - distance array & corresponding posterior 
+                                 distance PDF (1D if pi&sigma_pi are scalar, 
+                                 2D if not)
+            meandist, diststd, modedist - statistics of the distance PDF
+        """
+        self.distarray = np.linspace(min_dist, max_dist, resolution)
+        distpdf   = posterior(self.distarray, pi, sigma_pi, **kwargs)
+        self.distpdf   = distpdf / np.sum(distpdf, axis=0) 
         
-    Input:
-        pi:        parallax (array or scalar)
-        sigma_pi:  parallax_uncertainty (array or scalar)
-    Optional:
-        min_dist:  minimum allowed distance
-        max_dist:  maximum allowed distance
-        resolution:resolution of the distance PDF
-    Output:
-        distance array, posterior distance PDF (1D if pi&sigma_pi are scalar, 2D if not)
-    """
-    distarray = np.linspace(min_dist, max_dist, resolution)
-    distpdf   = posterior(distarray, pi, sigma_pi, **kwargs)
-    distpdf   = distpdf / np.sum(distpdf, axis=0) 
-    return distarray, distpdf
+        # Compute some basic statistics: Mean, standard deviation, and mode 
+        if np.isscalar(pi):
+            self.meandist = np.average( self.distarray, axis=0, weights=self.distpdf )
+            self.diststd  = np.sqrt( np.average( (self.distarray - self.meandist)**2, 
+                                                  axis=0, weights=self.distpdf ) )
+            self.modedist = self.distarray[np.argmax(self.distpdf)]
+        else:
+            self.meandist = np.sum(self.distpdf*self.distarray[:, np.newaxis]/np.sum(self.distpdf,axis=0), axis=0)
+            self.diststd  = np.sqrt( np.sum( self.distpdf * 
+                                            (self.distarray[:, np.newaxis] - self.meandist[np.newaxis,:] / np.sum(self.distpdf,axis=0) )**2., axis=0 ))
+            self.modedist = self.distarray[np.argmax(self.distpdf, axis=0)]
 
-def meandist(pi, sigma_pi, **kwargs):
-    """
-    Get the mean posterior distance given parallax and parallax uncertainty
-        
-    Input:
-        pi:        parallax (array or scalar)
-        sigma_pi:  parallax_uncertainty (array or scalar)
-    Optional:
-        keyword arguments (min_dist, max_dist, resolution, prior)
-    Output:
-        mean posterior distance (array or scalar)
-    """
-    dists, pdf = distpdf(pi, sigma_pi, **kwargs)
-    if np.isscalar(pi):
-        return np.average( dists, axis=0, weights=pdf )
-    else:
-        return np.sum(pdf*dists[:, np.newaxis]/np.sum(pdf,axis=0), axis=0)
-
-def diststd(pi, sigma_pi, **kwargs):
-    """
-    Get the posterior distance standard deviation given parallax and parallax uncertainty
-        
-    Input:
-        pi:        parallax (array or scalar)
-        sigma_pi:  parallax_uncertainty (array or scalar)
-    Optional:
-        keyword arguments (min_dist, max_dist, resolution, prior)
-    Output:
-        posterior distance standard deviation (array or scalar)
-    """
-    dists, pdf = distpdf(pi, sigma_pi)
-    if np.isscalar(pi):
-        return np.sqrt( np.average( (dists-meandist(pi, sigma_pi))**2,  axis=0, weights=pdf ) )
-    else:
-        return np.sqrt( np.sum( pdf * (dists[:, np.newaxis] - meandist(pi, sigma_pi)[np.newaxis,:] / np.sum(pdf,axis=0) )**2., axis=0 ))
-
-def modedist(pi, sigma_pi, **kwargs):
-    """
-    Get the posterior distance mode given parallax and parallax uncertainty
-        
-    Input:
-        pi:        parallax (array or scalar)
-        sigma_pi:  parallax_uncertainty (array or scalar)
-    Optional:
-        keyword arguments (min_dist, max_dist, resolution, prior)
-    Output:
-        mode posterior distance (array or scalar)
-    """
-    dists, pdf = distpdf(pi, sigma_pi, **kwargs)
-    if np.isscalar(pi):
-        return dists[np.argmax(pdf)]
-    else:
-        return dists[np.argmax(pdf, axis=0)]
 
