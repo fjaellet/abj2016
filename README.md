@@ -7,7 +7,7 @@ It basically implements the formalism of [Astraatmadja &amp; Bailer-Jones (2016)
 This is how it works. Easiest thing is to download the `abj2016.py` and copy it into your project. Then
 ~~~~
 import abj2016
-import numpy 
+import numpy as np
 ~~~~
 Now, let's imagine an array of stellar distances (in kiloparsecs), between 0.05 and 4 kpc. We measure the parallax for each star with an uncertainty of about 0.04 milliarcsec (vamos, a typical Gaia DR2 value). Then we have 
 ~~~~
