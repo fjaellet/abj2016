@@ -18,18 +18,20 @@ If we, in turn, want to infer the stellar distances from the measured parallaxes
 [Bailer-Jones (2015)](http://adsabs.harvard.edu/abs/2015PASP..127..994B "BJ2015 Paper"). Especially in the presence of large fractional parallax uncertainties, you shouldn't just do `d = 1/measured_parallax`... 
 Instead, you want to compute statistics of the posterior distance PDF (given parallax and parallax uncertainty):
 ~~~~
-modedists = abj2016.modedist(measured_parallaxes, 0.04)
-meandists = abj2016.meandist(measured_parallaxes, 0.04)
-sigdists  = abj2016.diststd(measured_parallaxes, 0.04)
+distpdf = abj2016.distpdf(measured_parallaxes, 0.04)   # Initiates the distpdf object
+modedists = distpdf.modedist
+meandists = distpdf.meandist
+sigdists  = distpdf.diststd
 ~~~~
-This also works if the parallax uncertainties are given as arrays. Or if the measured parallax is a scalar.
+This also works if the parallax uncertainties are given as an array. Or if the measured parallax is a scalar.
 
 You can also specify the space density prior by adding e.g. `priors="uniform_density"`. Currently, only the three isotropic density priors presented by Astraatmadja &amp; Bailer-Jones (2016) are supported (default:`priors="exponential"`). You can also specify the resolution of the distance posterior PDF (default: `resolution=10000`), and the minimum and maximum allowed distances in kiloparsec (default: `min_dist=0` and `max_dist=30`).
 
 You can also get the posterior PDF itself, via e.g.:
 ~~~~
 pi, sigma_pi = 0.3, 0.1 # measured parallax and uncertainty in mas 
-distarray, distpdf = abj2016.distpdf(pi, sigma_pi, min_dist=0., max_dist=10., resolution=100000, priors="uniform_distance")
+distpdf = abj2016.distpdf(pi, sigma_pi, min_dist=0., max_dist=10., resolution=100000, priors="uniform_distance")
+array, pdf = distpdf.distarray, distpdf.distpdf
 ~~~~
 Have fun and give a shout if you find a bug or have a question: `fanders*ät*aip*dot*de`.
 
